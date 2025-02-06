@@ -1,21 +1,155 @@
-import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting } from 'obsidian';
+import { App, Editor, MarkdownView, Modal, Notice, Plugin, PluginSettingTab, Setting, TFile } from 'obsidian';
 
 // Remember to rename these classes and interfaces!
 
 interface MyPluginSettings {
 	mySetting: string;
+	imageSavePath: string;
 }
 
 const DEFAULT_SETTINGS: MyPluginSettings = {
-	mySetting: 'default'
+	mySetting: 'default',
+	imageSavePath: 'attachments',
 }
 
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 
+
+	// isInProperty()
+	// {
+	// 	return true;//TODO: HOW?
+	// }
+
+	// //doesnt even get called in a property
+	// async test(
+    //     evt: ClipboardEvent,
+    //     editor: Editor,
+    //     info: MarkdownView)
+	// {
+	// 	if(evt.defaultPrevented)
+	// 		return;
+
+	// 	if(!this.isInProperty())
+	// 		return;
+
+	// 	evt.preventDefault();
+	// 	console.log(editor.getDoc().getValue())
+	// }
+
+	isFrontmatterField(element: HTMLElement | null): boolean {
+		if (!element) return false;
+
+		// console.log(JSON.stringify(element, null, 4));
+
+		return element.matches('.metadata-input-longtext.mod-truncate');
+	}
+
+	handlePaste(evt: ClipboardEvent) {
+		const activeEl = document.activeElement as HTMLElement;
+
+		if (this.isFrontmatterField(activeEl))
+			this.handleFrontmatterImagePaste(evt, activeEl);
+	}
+
+	async handleFrontmatterImagePaste(evt: ClipboardEvent, target: HTMLElement) {
+		if (!evt.clipboardData)
+			return;
+
+		if(evt.clipboardData.types[0] != 'Files')
+			return;
+		console.log(JSON.stringify(evt.clipboardData, null, 4));
+
+		const items: DataTransferItemList = evt.clipboardData.items;
+		for (let i = 0; i < items.length; i++) {
+			const item = items[i];
+
+			if (item.kind === "file" && item.type.startsWith("image/")) {
+				const file = item.getAsFile();
+				if (file) {
+					await this.saveImageToVault(file, target);
+					evt.preventDefault();
+					break;
+				}
+			}
+		}
+	}
+	
+	async saveImageToVault(file: File, target: HTMLElement) {
+		const arrayBuffer = await file.arrayBuffer();
+		const fileExtension = file.type.split("/")[1] || "png";
+		const fileName = `Pasted image ${Date.now()}.${fileExtension}`;
+
+		const activeFile = this.app.workspace.getActiveFile();
+		if(!activeFile)
+		{
+			new Notice(`No active file!`);
+			return;
+		}
+		const fileManager = this.app.fileManager;
+		const savePath = await fileManager.getAvailablePathForAttachment(fileName, activeFile.path);
+
+		await this.app.vault.createBinary(savePath, arrayBuffer);
+
+		await this.insertImageIntoFrontmatter(activeFile!, `[[${savePath}]]`);
+	}
+	
+	// insertImageLink(target: HTMLElement, filePath: string) {
+	// 	// Assuming frontmatter is YAML-based
+	// 	const editor = this.getEditor();
+	// 	if (!editor) return;
+
+	// 	const doc = editor.getDoc();
+	// 	const cursor = doc.getCursor();
+	// 	const markdownLink = `${filePath}`;
+
+	// 	doc.replaceRange(markdownLink, cursor);
+	// 	new Notice(`Image saved: ${filePath}`);
+	// }
+
+	
+	async insertImageIntoFrontmatter(file: TFile, filePath: string) {
+		const fileManager = this.app.fileManager;
+		const activeEl = document.activeElement as HTMLElement;
+		const propertyName = activeEl.parentNode?.parentNode?.children[0].children[1].getAttribute("aria-label");
+
+		activeEl.blur();
+		await new Promise(resolve => setTimeout(resolve, 50));
+
+		try {
+			if (!propertyName)
+				throw new Error("aria-label attribute not found on the expected element.");
+			await fileManager.processFrontMatter(file, (frontmatter) => {
+				frontmatter[propertyName] = filePath;
+			});
+			new Notice(`Image added to frontmatter: ${filePath}`);
+		} catch (error) {
+			new Notice("Failed to update frontmatter!");
+			console.error("Error updating frontmatter:", error);
+		}
+	}
+
+	getEditor(): Editor | null {
+		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+		return view ? view.editor : null;
+	}
+
 	async onload() {
 		await this.loadSettings();
+		console.log("ASD");
 
+		// this.addStatusBarItem().createEl('span');
+		
+		// this.app.workspace.on('editor-change', editor => 
+		// 	console.log(editor.getDoc().getValue())
+		// );
+
+		// this.app.workspace.on('editor-paste', (evt, editor, info) => this.test(evt, editor, info));
+		//-> doesnt register in property...
+
+		this.registerDomEvent(document, "paste", (evt: ClipboardEvent) => this.handlePaste(evt), true);
+
+		
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Sample Plugin', (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
