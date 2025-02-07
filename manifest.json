@@ -1,11 +1,10 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "paste-image-into-property",
+	"name": "Paste Image Into Property",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "Allows pasting images from the clipboard into frontmatter properties in live preview.",
+	"author": "Nito",
+	"authorUrl": "https://github.com/Nitero",
 	"isDesktopOnly": false
 }

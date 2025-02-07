@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
+	"name": "paste-image-into-property",
 	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"description": "Allows pasting images from the clipboard into frontmatter properties in live preview.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
