@@ -34,7 +34,6 @@ export default class MyPlugin extends Plugin {
 
 		if(evt.clipboardData.types[0] != 'Files')
 			return;
-		console.log(JSON.stringify(evt.clipboardData, null, 4));
 
 		const items: DataTransferItemList = evt.clipboardData.items;
 		for (let i = 0; i < items.length; i++) {
@@ -62,48 +61,39 @@ export default class MyPlugin extends Plugin {
 			new Notice(`No active file!`);
 			return;
 		}
-		const fileManager = this.app.fileManager;
-		const savePath = await fileManager.getAvailablePathForAttachment(fileName, activeFile.path);
+		
+		const savePath = await this.app.fileManager.getAvailablePathForAttachment(fileName, activeFile.path);
 
 		//store selected property before safing to ensure compatability with obsidian-paste-image-rename plugin
 		const activeEl = document.activeElement as HTMLElement;
 		const propertyName = activeEl.parentNode?.parentNode?.children[0].children[1].getAttribute("aria-label");
 
-		await this.app.vault.createBinary(savePath, arrayBuffer);
+		const newFile = await this.app.vault.createBinary(savePath, arrayBuffer);
 
-		await this.insertImageIntoFrontmatter(activeFile!, `[[${savePath}]]`, activeEl, propertyName);
+		await this.insertImageIntoFrontmatter(activeFile, `[[${savePath}]]`, activeEl, propertyName, newFile);
 	}
 	
-	async insertImageIntoFrontmatter(file: TFile, filePath: string, activeEl: HTMLElement, propertyName: string | null | undefined) {
-		const fileManager = this.app.fileManager;
-
+	async insertImageIntoFrontmatter(activeFile: TFile, filePath: string, activeEl: HTMLElement, propertyName: string | null | undefined, newFile: TFile) {
 		if(document.activeElement as HTMLElement == activeEl)
-		{
 			activeEl.blur();
-			await new Promise(resolve => setTimeout(resolve, 50));
-		}
+		await new Promise(resolve => setTimeout(resolve, 50));
 
 		try {
-			if (!propertyName)
+			if (propertyName == null)
 				throw new Error("aria-label attribute not found on the expected element.");
-			await fileManager.processFrontMatter(file, (frontmatter) => {
+			await this.app.fileManager.processFrontMatter(activeFile, (frontmatter) => {
 				frontmatter[propertyName] = filePath;
 			});
 			new Notice(`Image added to frontmatter: ${filePath}`);
 		} catch (error) {
-			new Notice("Failed to update frontmatter!");
+			await this.app.vault.delete(newFile);
+			new Notice(`Failed to update frontmatter!\n${error}`);
 			console.error("Error updating frontmatter:", error);
 		}
 	}
 
-	getEditor(): Editor | null {
-		const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-		return view ? view.editor : null;
-	}
-
 	async onload() {
 		await this.loadSettings();
-		console.log("ASD");
 
 		// this.addStatusBarItem().createEl('span');
 		
@@ -142,7 +132,7 @@ export default class MyPlugin extends Plugin {
 			id: 'sample-editor-command',
 			name: 'Sample editor command',
 			editorCallback: (editor: Editor, view: MarkdownView) => {
-				console.log(editor.getSelection());
+				// console.log(editor.getSelection());
 				editor.replaceSelection('Sample Editor Command');
 			}
 		});
@@ -172,7 +162,7 @@ export default class MyPlugin extends Plugin {
 		// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
 		// Using this function will automatically remove the event listener when this plugin is disabled.
 		this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
-			console.log('click', evt);
+			// console.log('click', evt);
 		});
 
 		// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
