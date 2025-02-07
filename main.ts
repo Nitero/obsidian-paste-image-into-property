@@ -15,33 +15,9 @@ const DEFAULT_SETTINGS: MyPluginSettings = {
 export default class MyPlugin extends Plugin {
 	settings: MyPluginSettings;
 
-
-	// isInProperty()
-	// {
-	// 	return true;//TODO: HOW?
-	// }
-
-	// //doesnt even get called in a property
-	// async test(
-    //     evt: ClipboardEvent,
-    //     editor: Editor,
-    //     info: MarkdownView)
-	// {
-	// 	if(evt.defaultPrevented)
-	// 		return;
-
-	// 	if(!this.isInProperty())
-	// 		return;
-
-	// 	evt.preventDefault();
-	// 	console.log(editor.getDoc().getValue())
-	// }
-
 	isFrontmatterField(element: HTMLElement | null): boolean {
-		if (!element) return false;
-
-		// console.log(JSON.stringify(element, null, 4));
-
+		if (!element)
+			return false;
 		return element.matches('.metadata-input-longtext.mod-truncate');
 	}
 
@@ -89,32 +65,23 @@ export default class MyPlugin extends Plugin {
 		const fileManager = this.app.fileManager;
 		const savePath = await fileManager.getAvailablePathForAttachment(fileName, activeFile.path);
 
-		await this.app.vault.createBinary(savePath, arrayBuffer);
-
-		await this.insertImageIntoFrontmatter(activeFile!, `[[${savePath}]]`);
-	}
-	
-	// insertImageLink(target: HTMLElement, filePath: string) {
-	// 	// Assuming frontmatter is YAML-based
-	// 	const editor = this.getEditor();
-	// 	if (!editor) return;
-
-	// 	const doc = editor.getDoc();
-	// 	const cursor = doc.getCursor();
-	// 	const markdownLink = `${filePath}`;
-
-	// 	doc.replaceRange(markdownLink, cursor);
-	// 	new Notice(`Image saved: ${filePath}`);
-	// }
-
-	
-	async insertImageIntoFrontmatter(file: TFile, filePath: string) {
-		const fileManager = this.app.fileManager;
+		//store selected property before safing to ensure compatability with obsidian-paste-image-rename plugin
 		const activeEl = document.activeElement as HTMLElement;
 		const propertyName = activeEl.parentNode?.parentNode?.children[0].children[1].getAttribute("aria-label");
 
-		activeEl.blur();
-		await new Promise(resolve => setTimeout(resolve, 50));
+		await this.app.vault.createBinary(savePath, arrayBuffer);
+
+		await this.insertImageIntoFrontmatter(activeFile!, `[[${savePath}]]`, activeEl, propertyName);
+	}
+	
+	async insertImageIntoFrontmatter(file: TFile, filePath: string, activeEl: HTMLElement, propertyName: string | null | undefined) {
+		const fileManager = this.app.fileManager;
+
+		if(document.activeElement as HTMLElement == activeEl)
+		{
+			activeEl.blur();
+			await new Promise(resolve => setTimeout(resolve, 50));
+		}
 
 		try {
 			if (!propertyName)
