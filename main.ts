@@ -60,8 +60,9 @@ export default class PasteImageIntoProperty extends Plugin {
 		const propertyName = activeEl.parentNode?.parentNode?.children[0].children[1].getAttribute("aria-label");
 
 		const newFile = await this.app.vault.createBinary(savePath, arrayBuffer);
-
-		await this.writeLinkIntoFrontmatter(activeFile, `[[${savePath}]]`, activeEl, propertyName, newFile);
+		
+		const linkName = savePath.split('/').last();
+		await this.writeLinkIntoFrontmatter(activeFile, `[[${linkName}]]`, activeEl, propertyName, newFile);
 	}
 	
 	async writeLinkIntoFrontmatter(activeFile: TFile, filePath: string, activeEl: HTMLElement, propertyName: string | null | undefined, newFile: TFile) {
