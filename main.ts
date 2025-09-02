@@ -9,14 +9,23 @@ export default class PasteImageIntoProperty extends Plugin {
 	handlePaste(evt: ClipboardEvent) {
 		const activeEl = document.activeElement as HTMLElement;
 
-		if (this.isValidFrontmatterField(activeEl))
+		const isFrontmatterFieldSupported = this.isSupportedFrontmatterField(activeEl);
+		if (isFrontmatterFieldSupported)
 			this.handleImagePaste(evt, activeEl);
+		else if(this.isFrontmatterField(activeEl.parentElement) || this.isFrontmatterField(activeEl.parentElement?.parentElement))
+			new Notice(`Pasting images is only supported in property type "Text"!`);
 	}
 
-	isValidFrontmatterField(element: HTMLElement | null): boolean {
+	isFrontmatterField(element: HTMLElement | null | undefined): boolean {
 		if (!element)
 			return false;
-		return element.matches('.metadata-input-longtext.mod-truncate');//only text property fields
+		return element.matches('.metadata-property-value');
+	}
+
+	isSupportedFrontmatterField(element: HTMLElement | null): boolean {
+		if (!element)
+			return false;
+		return element.matches('.metadata-input-longtext');//only text property fields
 	}
 
 	async handleImagePaste(evt: ClipboardEvent, target: HTMLElement) {
