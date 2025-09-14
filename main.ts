@@ -64,10 +64,10 @@ export default class PasteImageIntoProperty extends Plugin {
 		
 		const savePath = await this.app.fileManager.getAvailablePathForAttachment(fileName, activeFile.path);
 
-		//store selected property before safing to ensure compatability with obsidian-paste-image-rename plugin
+		//store selected property before saving to ensure compatability with obsidian-paste-image-rename plugin
 		const activeEl = document.activeElement as HTMLElement;
-		const propertyName = activeEl.parentNode?.parentNode?.children[0].children[1].getAttribute("aria-label");
-
+		const propertyName = activeEl.closest(".metadata-property")?.getAttribute("data-property-key");
+		
 		const newFile = await this.app.vault.createBinary(savePath, arrayBuffer);
 		
 		const linkName = savePath.split('/').last();
@@ -81,7 +81,7 @@ export default class PasteImageIntoProperty extends Plugin {
 
 		try {
 			if (!propertyName)
-				throw new Error("aria-label attribute not found on the expected element.");
+				throw new Error("data-property-key attribute not found on the expected element.");
 			await this.app.fileManager.processFrontMatter(activeFile, (frontmatter) => {
 				frontmatter[propertyName] = filePath;
 			});
