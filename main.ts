@@ -9,6 +9,9 @@ export default class PasteImageIntoProperty extends Plugin {
 	handlePaste(evt: ClipboardEvent) {
 		const activeEl = document.activeElement as HTMLElement;
 
+		if (!evt.clipboardData || evt.clipboardData.types[0] != 'Files')
+			return false;
+
 		const isFrontmatterFieldSupported = this.isSupportedFrontmatterField(activeEl);
 		if (isFrontmatterFieldSupported)
 			this.handleImagePaste(evt, activeEl);
@@ -29,13 +32,7 @@ export default class PasteImageIntoProperty extends Plugin {
 	}
 
 	async handleImagePaste(evt: ClipboardEvent, target: HTMLElement) {
-		if (!evt.clipboardData)
-			return;
-
-		if(evt.clipboardData.types[0] != 'Files')
-			return;
-
-		const items: DataTransferItemList = evt.clipboardData.items;
+		const items: DataTransferItemList = evt.clipboardData!.items;
 		for (let i = 0; i < items.length; i++) {
 			const item = items[i];
 
