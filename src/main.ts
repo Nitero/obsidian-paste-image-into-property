@@ -80,13 +80,13 @@ export default class PasteImageIntoProperty extends Plugin {
 		try {
 			if (!propertyName)
 				throw new Error("data-property-key attribute not found on the expected element.");
-			await this.app.fileManager.processFrontMatter(activeFile, (frontmatter) => {
+			await this.app.fileManager.processFrontMatter(activeFile, (frontmatter: Record<string, unknown>) => {
 				frontmatter[propertyName] = filePath;
 			});
 			new Notice(`Image added to frontmatter: ${filePath}`);
-		} catch (error) {
+		} catch (error: unknown) {
 			await this.app.fileManager.trashFile(newFile);
-			new Notice(`Failed to update frontmatter!\n${error}`);
+			new Notice("Failed to update frontmatter! See console for more details.");
 			console.error("Error updating frontmatter:", error);
 		}
 	}

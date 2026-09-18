@@ -2,7 +2,7 @@
 	"id": "paste-image-into-property",
 	"name": "Paste Image Into Property",
 	"version": "1.0.7",
-	"minAppVersion": "1.5.7",
+	"minAppVersion": "1.6.6",
 	"description": "Paste images from the clipboard into frontmatter properties in live preview.",
 	"author": "Nito",
 	"authorUrl": "https://github.com/Nitero",
