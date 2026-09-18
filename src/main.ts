@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFile } from 'obsidian';
+import { Notice, Plugin, TFile } from "obsidian";
 
 export default class PasteImageIntoProperty extends Plugin {
 
@@ -9,7 +9,7 @@ export default class PasteImageIntoProperty extends Plugin {
 	handlePaste(evt: ClipboardEvent) {
 		const activeEl = activeDocument.activeElement as HTMLElement;
 
-		if (!evt.clipboardData || evt.clipboardData.types[0] != 'Files')
+		if (!evt.clipboardData || evt.clipboardData.types[0] != "Files")
 			return false;
 
 		const isFrontmatterFieldSupported = this.isSupportedFrontmatterField(activeEl);
@@ -17,18 +17,19 @@ export default class PasteImageIntoProperty extends Plugin {
 			void this.handleImagePaste(evt);
 		else if(this.isFrontmatterField(activeEl.parentElement) || this.isFrontmatterField(activeEl.parentElement?.parentElement))
 			new Notice(`Pasting images is only supported in property type "Text"!`);
+		return true;
 	}
 
 	isFrontmatterField(element: HTMLElement | null | undefined): boolean {
 		if (!element)
 			return false;
-		return element.matches('.metadata-property-value');
+		return element.matches(".metadata-property-value");
 	}
 
 	isSupportedFrontmatterField(element: HTMLElement | null): boolean {
 		if (!element)
 			return false;
-		return element.matches('.metadata-input-longtext');//only text property fields
+		return element.matches(".metadata-input-longtext");//only text property fields
 	}
 
 	async handleImagePaste(evt: ClipboardEvent) {
@@ -36,7 +37,7 @@ export default class PasteImageIntoProperty extends Plugin {
 		for (let i = 0; i < items.length; i++) {
 			const item = items[i];
 
-			if (item.kind === "file" && item.type.startsWith("image/")) {
+			if (item && item.kind === "file" && item.type.startsWith("image/")) {
 				const file = item.getAsFile();
 				if (file) {
 					await this.saveImageAndWriteLink(file);
@@ -46,7 +47,7 @@ export default class PasteImageIntoProperty extends Plugin {
 			}
 		}
 	}
-	
+
 	async saveImageAndWriteLink(file: File) {
 		const arrayBuffer = await file.arrayBuffer();
 		const fileExtension = file.type.split("/")[1] || "png";
@@ -55,22 +56,22 @@ export default class PasteImageIntoProperty extends Plugin {
 		const activeFile = this.app.workspace.getActiveFile();
 		if(!activeFile)
 		{
-			new Notice(`No active file!`);
+			new Notice("No active file!");
 			return;
 		}
-		
+
 		const savePath = await this.app.fileManager.getAvailablePathForAttachment(fileName, activeFile.path);
 
 		//store selected property before saving to ensure compatability with obsidian-paste-image-rename plugin
 		const activeEl = activeDocument.activeElement as HTMLElement;
 		const propertyName = activeEl.closest(".metadata-property")?.getAttribute("data-property-key");
-		
+
 		const newFile = await this.app.vault.createBinary(savePath, arrayBuffer);
-		
-		const linkName = savePath.split('/').last();
+
+		const linkName = savePath.split("/").last();
 		await this.writeLinkIntoFrontmatter(activeFile, `[[${linkName}]]`, activeEl, propertyName, newFile);
 	}
-	
+
 	async writeLinkIntoFrontmatter(activeFile: TFile, filePath: string, activeEl: HTMLElement, propertyName: string | null | undefined, newFile: TFile) {
 		if(activeDocument.activeElement as HTMLElement == activeEl)
 			activeEl.blur();
