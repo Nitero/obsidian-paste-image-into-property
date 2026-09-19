@@ -75,7 +75,7 @@ export default class PasteImageIntoProperty extends Plugin {
 	async writeLinkIntoFrontmatter(activeFile: TFile, filePath: string, activeEl: HTMLElement, propertyName: string | null | undefined, newFile: TFile) {
 		if(activeDocument.activeElement as HTMLElement == activeEl)
 			activeEl.blur();
-		await new Promise(resolve => activeWindow.setTimeout(resolve, 50));
+		await new Promise(resolve => window.setTimeout(resolve, 50));
 
 		try {
 			if (!propertyName)
